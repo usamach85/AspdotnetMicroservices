@@ -1,4 +1,6 @@
-﻿using Basket.API.Repositories;
+﻿using Basket.API.GrpcServices;
+using Basket.API.Repositories;
+using Discount.Grpc.Protos;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -26,12 +28,16 @@ namespace Basket.API
             {
                 //we are providing because redis in local computer container runnig on this port
                 //getting the connection from the connection string so that where our container is lying on runtime
-                options.Configuration = Configuration.GetValue<string>("CacheSettings:ConnectionString"); ;
+                options.Configuration = Configuration.GetValue<string>("CacheSettings:ConnectionString");
             });
 
             services.AddScoped<IBasketRepository,BasketRepository>();
-   
-
+            //we are injecting the service of the client side proto service.
+            //we are also giving the address url of the Grpc file in this case we are getting it from the 
+            //appsettings 
+            services.AddGrpcClient<DiscountProtoService.DiscountProtoServiceClient>
+                (x => x.Address = new Uri(Configuration["GrpcSettings:DiscountUrl"]));
+            services.AddScoped<DiscountGrpcService>();
 
             services.AddControllers();
             services.AddSwaggerGen(c =>
